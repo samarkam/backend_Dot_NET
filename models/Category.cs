@@ -11,5 +11,9 @@ namespace backend.models
 
         [ForeignKey(nameof(MenuId))]
         public required Menu Menu { get; set; }
+
+
+        public required ICollection<Article> Articles { get; set; }
+
     }
 }

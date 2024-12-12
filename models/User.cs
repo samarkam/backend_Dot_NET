@@ -8,5 +8,8 @@ namespace backend.models
 
         public required string UserName { get; set; }
         public required string Password { get; set; }
+
+        public UserProfile UserProfile { get; set; }
+
     }
 }
