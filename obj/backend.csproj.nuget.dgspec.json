@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\SAMAR\\Desktop\\.net_backend\\backend\\backend.csproj": {}
+    "C:\\Users\\Nour\\Desktop\\dotNet\\backend_Dot_NET\\backend.csproj": {}
   },
   "projects": {
-    "C:\\Users\\SAMAR\\Desktop\\.net_backend\\backend\\backend.csproj": {
+    "C:\\Users\\Nour\\Desktop\\dotNet\\backend_Dot_NET\\backend.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\SAMAR\\Desktop\\.net_backend\\backend\\backend.csproj",
+        "projectUniqueName": "C:\\Users\\Nour\\Desktop\\dotNet\\backend_Dot_NET\\backend.csproj",
         "projectName": "backend",
-        "projectPath": "C:\\Users\\SAMAR\\Desktop\\.net_backend\\backend\\backend.csproj",
-        "packagesPath": "C:\\Users\\SAMAR\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\SAMAR\\Desktop\\.net_backend\\backend\\obj\\",
+        "projectPath": "C:\\Users\\Nour\\Desktop\\dotNet\\backend_Dot_NET\\backend.csproj",
+        "packagesPath": "C:\\Users\\Nour\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Nour\\Desktop\\dotNet\\backend_Dot_NET\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\SAMAR\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Nour\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -46,6 +46,20 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[6.4.0, )"
