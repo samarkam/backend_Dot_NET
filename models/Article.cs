@@ -13,7 +13,6 @@ namespace backend.models
 
         public int CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]
-        [JsonIgnore]
         public required Category Category { get; set; }
     }
 }

@@ -212,7 +212,19 @@ namespace backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
 
+                    b.Property<string>("Avatar")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -234,19 +246,12 @@ namespace backend.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserProfileId"));
 
                     b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("UserId")
@@ -254,7 +259,8 @@ namespace backend.Migrations
 
                     b.HasKey("UserProfileId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("UserProfiles");
                 });
@@ -262,7 +268,7 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.models.Article", b =>
                 {
                     b.HasOne("backend.models.Category", "Category")
-                        .WithMany()
+                        .WithMany("Articles")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -348,8 +354,8 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.models.UserProfile", b =>
                 {
                     b.HasOne("backend.models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                        .WithOne("UserProfile")
+                        .HasForeignKey("backend.models.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -361,6 +367,11 @@ namespace backend.Migrations
                     b.Navigation("CartItems");
                 });
 
+            modelBuilder.Entity("backend.models.Category", b =>
+                {
+                    b.Navigation("Articles");
+                });
+
             modelBuilder.Entity("backend.models.Menu", b =>
                 {
                     b.Navigation("Categorys");
@@ -369,6 +380,11 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.models.Order", b =>
                 {
                     b.Navigation("OrderDetails");
+                });
+
+            modelBuilder.Entity("backend.models.User", b =>
+                {
+                    b.Navigation("UserProfile");
                 });
 
             modelBuilder.Entity("backend.models.UserProfile", b =>

@@ -191,5 +191,51 @@ namespace backend.Controllers
 
             return Ok(new { message = "Article deleted successfully." });
         }
+
+
+
+        // GET: api/Articles with pagination
+        [HttpGet("paginate")]
+        public async Task<ActionResult<IEnumerable<ArticleResponseDto>>> GetArticlesPaginate([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            if (page < 1 || pageSize < 1)
+            {
+                return BadRequest("Page and pageSize must be greater than zero.");
+            }
+
+            var totalArticlesCount = await _context.Articles.CountAsync();
+
+            var articles = await _context.Articles
+                .Include(a => a.Category)
+                .Select(a => new ArticleResponseDto
+                {
+                    ArticleId = a.ArticleId,
+                    Name = a.Name,
+                    Price = a.Price,
+                    Reference = a.Reference,
+                    CategoryId = a.CategoryId,
+                    Category = new CategoryResponseDto
+                    {
+                        CategoryId = a.Category.CategoryId,
+                        Name = a.Category.Name,
+                        MenuId = a.Category.MenuId
+                    }
+                })
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var response = new
+            {
+                TotalArticles = totalArticlesCount,
+                PageSize = pageSize,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(totalArticlesCount / (double)pageSize),
+                Articles = articles
+            };
+
+            return Ok(response);
+        }
+
     }
 }
