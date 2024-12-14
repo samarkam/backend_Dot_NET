@@ -1,4 +1,6 @@
 using backend.models;
+using backend.REPOSITORY.IMPL;
+using backend.REPOSITORY;
 using backend.services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +19,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(x => x.UseSqlServer(connecti
 
 // Register JwtAuthService with the secret key
 builder.Services.AddScoped<JwtAuthService>(provider => new JwtAuthService(secretKey));
+
+
+//Repositories
+builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 
 builder.Services.AddCors(options =>
 {
@@ -55,20 +61,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseCors("AllowLocalhost");
-app.Use(async (context, next) =>
-{
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", "http://localhost:5173");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        context.Response.StatusCode = 204; // No Content
-    }
-    else
-    {
-        await next.Invoke();
-    }
-});
+
 
 
 app.UseHttpsRedirection();

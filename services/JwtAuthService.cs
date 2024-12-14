@@ -15,12 +15,35 @@ namespace backend.services
             _key = key;
         }
 
-        public string GenerateToken(string username)
+        //public string GenerateToken(string username)
+        //{
+        //    var claims = new[]
+        //    {
+        //        new Claim(ClaimTypes.Name, username)
+        //    };
+
+        //    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
+        //    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        //    var token = new JwtSecurityToken(
+        //        issuer: "your-issuer",
+        //        audience: "your-audience",
+        //        claims: claims,
+        //        expires: DateTime.Now.AddMinutes(30),
+        //        signingCredentials: creds);
+
+        //    return new JwtSecurityTokenHandler().WriteToken(token);
+        //}
+
+
+        public string GenerateToken(string username, string userId)
         {
+            // Add claims, including the NameIdentifier claim
             var claims = new[]
-            {
-                new Claim(ClaimTypes.Name, username)
-            };
+                {
+                    new Claim(ClaimTypes.Name, username),
+                    new Claim(ClaimTypes.NameIdentifier, userId) // Include the user ID as a claim
+                };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -34,6 +57,7 @@ namespace backend.services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 
 }
