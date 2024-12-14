@@ -32,25 +32,30 @@ namespace backend.Controllers
                     MenuId = m.MenuId,
                     Name = m.Name,
                     Description = m.Description,
-                    Categories = m.Categorys.Select(c => new CategoryResponseDto
-                    {
-                        CategoryId = c.CategoryId,
-                        Name = c.Name,
-                        MenuId = c.MenuId,
-                        Articles = c.Articles.Select(a => new ArticleResponseDto
+                    Categories = m.Categorys
+                        .Select(c => new CategoryResponseDto
                         {
-                            ArticleId = a.ArticleId,
-                            Name = a.Name,
-                            Price = a.Price,
-                            CategoryId = a.CategoryId,
-                            Reference = a.Reference
+                            CategoryId = c.CategoryId,
+                            Name = c.Name,
+                            MenuId = c.MenuId,
+                            Articles = c.Articles
+                                .Where(a => a.IsVisible)  // Filter only visible articles
+                                .Select(a => new ArticleResponseDto
+                                {
+                                    ArticleId = a.ArticleId,
+                                    Name = a.Name,
+                                    Price = a.Price,
+                                    IsVisible = a.IsVisible,
+                                    CategoryId = a.CategoryId,
+                                    Reference = a.Reference
+                                }).ToList()
                         }).ToList()
-                    }).ToList()
                 })
                 .ToListAsync();
 
             return Ok(menus);
         }
+
 
 
         // GET: api/Menus/5

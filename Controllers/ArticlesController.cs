@@ -22,6 +22,8 @@ namespace backend.Controllers
             _articleRepository = articleRepository;
         }
 
+
+
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ArticleResponseDto>>> GetArticles()
         {
@@ -42,8 +44,19 @@ namespace backend.Controllers
 
             return Ok(article);
         }
+        [HttpPost("visible")]
+        public async Task<IActionResult> UpdateVisibility([FromBody] UpdateVisibilityDto updateVisibilityDto)
+        {
+            var article = await _context.Articles.FindAsync(updateVisibilityDto.ArticleId);
+            if (article == null)
+            {
+                return NotFound();
+            }
 
-
+            article.IsVisible = updateVisibilityDto.IsVisible;
+            await _articleRepository.UpdateArticleAsyncVisibility(article);  
+            return Ok("Visibility updated successfully.");
+        }
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutArticle(int id, ArticleRequestDto articleRequestDto)

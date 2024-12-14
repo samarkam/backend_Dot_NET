@@ -26,6 +26,8 @@ namespace backend.REPOSITORY.IMPL
                     Price = a.Price,
                     Reference = a.Reference,
                     CategoryId = a.CategoryId,
+                    IsVisible = a.IsVisible,
+
                     Category = new CategoryResponseDto
                     {
                         CategoryId = a.Category.CategoryId,
@@ -55,6 +57,8 @@ namespace backend.REPOSITORY.IMPL
                 Price = article.Price,
                 Reference = article.Reference,
                 CategoryId = article.CategoryId,
+                IsVisible = article.IsVisible,
+
                 Category = new CategoryResponseDto
                 {
                     CategoryId = article.Category.CategoryId,
@@ -97,6 +101,8 @@ namespace backend.REPOSITORY.IMPL
                 Name = existingArticle.Name,
                 Price = existingArticle.Price,
                 CategoryId = existingArticle.CategoryId,
+                IsVisible = existingArticle.IsVisible,
+
                 Category = new CategoryResponseDto
                 {
                     CategoryId = existingCategory.CategoryId,
@@ -122,7 +128,8 @@ namespace backend.REPOSITORY.IMPL
                 Name = articleRequestDto.Name,
                 Price = articleRequestDto.Price,
                 CategoryId = articleRequestDto.CategoryId,
-                Category = category,  // Set the navigation property
+                Category = category, 
+                IsVisible= true,
                 Reference = articleRequestDto.Reference
             };
 
@@ -136,6 +143,7 @@ namespace backend.REPOSITORY.IMPL
                 Name = article.Name,
                 Price = article.Price,
                 CategoryId = article.CategoryId,
+                IsVisible= article.IsVisible,
                 Category = new CategoryResponseDto
                 {
                     CategoryId = article.Category.CategoryId,
@@ -179,6 +187,8 @@ namespace backend.REPOSITORY.IMPL
                     Price = a.Price,
                     Reference = a.Reference,
                     CategoryId = a.CategoryId,
+                    IsVisible = a.IsVisible,
+
                     Category = new CategoryResponseDto
                     {
                         CategoryId = a.Category.CategoryId,
@@ -194,5 +204,11 @@ namespace backend.REPOSITORY.IMPL
         }
 
 
+
+        public async Task UpdateArticleAsyncVisibility(Article article)
+        {
+            _context.Articles.Update(article);
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -9,6 +9,7 @@ using backend.models;
 using backend.DTO.order;
 using backend.REPOSITORY;
 using System.Collections.ObjectModel;
+using backend.DTO.user;
 
 namespace backend.Controllers
 {
@@ -28,21 +29,36 @@ namespace backend.Controllers
 
         // GET: api/order
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderResponseDto>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderWithUserResponseDto>>> GetOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            // Fetch all orders with their details and articles
-            var orders = await _context.Orders
+            // Fetch paginated orders with their details, articles, and user profiles
+            var totalOrders = await _context.Orders
                 .Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Article)
+                    .ThenInclude(od => od.Article)
+                .Include(o => o.User)
+                .Include(o => o.User.UserProfile)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            // Map orders to OrderResponseDto
-            var orderResponseDtos = orders.Select(order => new OrderResponseDto
+            var totalOrdersCount = await _context.Orders.CountAsync();
+
+            // Map orders to OrderWithUserResponseDto
+            var orderResponseDtos = totalOrders.Select(order => new OrderWithUserResponseDto
             {
                 OrderId = order.OrderId,
                 UserId = order.UserId,
                 TotalPrice = order.TotalPrice,
                 OrderDate = order.OrderDate,
+                UserDetails = new UserDetailsDto
+                {
+                    UserName = order.User.UserName,
+                    Address = order.User.UserProfile?.Address,
+                    PhoneNumber = order.User.UserProfile?.PhoneNumber,
+                    UserId = order.User.UserId,
+                    Email = order.User.Email
+                    
+                },
                 OrderDetails = new Collection<OrderDetailResponseDto>(
                     order.OrderDetails.Select(od => new OrderDetailResponseDto
                     {
@@ -60,8 +76,9 @@ namespace backend.Controllers
                 )
             }).ToList();
 
-            return Ok(orderResponseDtos);
+            return Ok(new { data = orderResponseDtos, totalOrders = totalOrdersCount });
         }
+
 
 
         [HttpGet("{orderId}")]

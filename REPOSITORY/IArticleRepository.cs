@@ -1,4 +1,5 @@
 ﻿using backend.DTO;
+using backend.models;
 
 namespace backend.REPOSITORY
 {
@@ -12,6 +13,9 @@ namespace backend.REPOSITORY
         Task<bool> DeleteArticleAsync(int id);
 
         Task<(IEnumerable<ArticleResponseDto> Articles, int TotalCount)> GetArticlesPaginateAsync(int page, int pageSize);
+
+
+        Task UpdateArticleAsyncVisibility(Article article);
 
     }
 }

@@ -9,8 +9,9 @@ namespace backend.models
         public required string Name { get; set; }
         public required decimal Price { get; set; }
 
-        public string Reference { get; set; }
+        public required string Reference { get; set; }
 
+        public required bool  IsVisible { get; set; }
         public int CategoryId { get; set; }
         [ForeignKey(nameof(CategoryId))]
         public required Category Category { get; set; }
