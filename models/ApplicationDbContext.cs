@@ -17,16 +17,6 @@ namespace backend.models
         public DbSet<User> Users { get; set; }
 
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<Order>()
-                .Property(o => o.Status)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<Order>()
-                .Property(o => o.PaymentStatus)
-                .HasConversion<string>();
-        }
     }
 
 }

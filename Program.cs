@@ -23,6 +23,7 @@ builder.Services.AddScoped<JwtAuthService>(provider => new JwtAuthService(secret
 
 //Repositories
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddCors(options =>
 {

@@ -60,7 +60,7 @@ namespace backend.Controllers
 
                 return Ok(new UserProfileResponseDto
                 {
-
+                    UserId = user.UserId,
                     Name = user.UserName,
                     PhoneNumber = user.UserProfile?.PhoneNumber,
                     Address = user.UserProfile?.Address,

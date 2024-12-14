@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿/*using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using backend.models;
@@ -6,7 +6,6 @@ using backend.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.DTO.user;
-using backend.models;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -23,7 +22,7 @@ namespace backend.Controllers
             _context = context;
         }
 
-        /* [HttpGet]
+        *//* [HttpGet]
          public async Task<ActionResult<IEnumerable<UserProfileResponseDto>>> GetUserProfiles()
          {
              var profiles = await _context.UserProfiles
@@ -167,7 +166,7 @@ namespace backend.Controllers
                     await _context.SaveChangesAsync();
 
                     return Ok(new { message = "User profile deleted successfully." });
-                }*/
+                }*//*
 
 
 
@@ -237,3 +236,4 @@ namespace backend.Controllers
     }
 
 }
+*/

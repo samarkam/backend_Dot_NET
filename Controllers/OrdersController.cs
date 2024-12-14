@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.models;
+using backend.DTO.order;
+using backend.REPOSITORY;
+using System.Collections.ObjectModel;
 
 namespace backend.Controllers
 {
@@ -15,93 +18,287 @@ namespace backend.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public OrdersController(ApplicationDbContext context)
+        private readonly IOrderRepository _orderRepository;
+
+        public OrdersController(IOrderRepository orderRepository, ApplicationDbContext context)
         {
+            _orderRepository = orderRepository;
             _context = context;
         }
 
-        // GET: api/Orders
+        // GET: api/order
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        public async Task<ActionResult<IEnumerable<OrderResponseDto>>> GetOrders()
         {
-            return await _context.Orders.ToListAsync();
+            // Fetch all orders with their details and articles
+            var orders = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Article)
+                .ToListAsync();
+
+            // Map orders to OrderResponseDto
+            var orderResponseDtos = orders.Select(order => new OrderResponseDto
+            {
+                OrderId = order.OrderId,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                OrderDetails = new Collection<OrderDetailResponseDto>(
+                    order.OrderDetails.Select(od => new OrderDetailResponseDto
+                    {
+                        OrderDetailId = od.OrderDetailId,
+                        ArticleId = od.ArticleId,
+                        Quantity = od.Quantity,
+                        Price = od.Price,
+                        Article = new ArticleOrderDetailResponseDto
+                        {
+                            ArticleId = od.Article.ArticleId,
+                            Name = od.Article.Name,
+                            Price = od.Article.Price
+                        }
+                    }).ToList()
+                )
+            }).ToList();
+
+            return Ok(orderResponseDtos);
         }
 
-        // GET: api/Orders/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+
+        [HttpGet("{orderId}")]
+        public async Task<ActionResult<OrderResponseDto>> GetOrderById(int orderId)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Article)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
             if (order == null)
             {
-                return NotFound();
+                return NotFound($"Order with ID {orderId} not found.");
             }
 
-            return order;
+            var orderResponseDto = new OrderResponseDto
+            {
+                OrderId = order.OrderId,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                OrderDetails = new Collection<OrderDetailResponseDto>(
+                    order.OrderDetails.Select(od => new OrderDetailResponseDto
+                    {
+                        OrderDetailId = od.OrderDetailId,
+                        ArticleId = od.ArticleId,
+                        Quantity = od.Quantity,
+                        Price = od.Price,
+                        Article = new ArticleOrderDetailResponseDto
+                        {
+                            ArticleId = od.Article.ArticleId,
+                            Name = od.Article.Name,
+                            Price = od.Article.Price
+                        }
+                    }).ToList()
+                )
+            };
+
+            return Ok(orderResponseDto);
         }
 
-        // PUT: api/Orders/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
-        {
-            if (id != order.OrderId)
-            {
-                return BadRequest();
-            }
 
-            _context.Entry(order).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return Ok(order);
-        }
-
-        // POST: api/Orders
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Order>> PostOrder(Order order)
+        public async Task<ActionResult<OrderResponseDto>> CreateOrder(OrderRequestDto orderRequestDto)
         {
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
+            if (orderRequestDto == null)
+            {
+                return BadRequest(); 
+            }
 
-            return CreatedAtAction("GetOrder", new { id = order.OrderId }, order);
+            //-------------------------------------------------
+            var user = await _context.Users.FirstOrDefaultAsync(o => o.UserId == orderRequestDto.UserId);  
+            if (user == null)
+            {
+                return NotFound("User not found");  
+            }
+            //-------------------------------------------------
+
+            var articleIdsInOrder = orderRequestDto.OrderDetails
+                .Select(orderDetail => orderDetail.ArticleId)
+                .ToList();
+
+            var existingArticleIds = _context.Articles
+                .Where(article => articleIdsInOrder.Contains(article.ArticleId))
+                .Select(article => article.ArticleId)
+                .ToList();
+
+            bool allExist = articleIdsInOrder.All(id => existingArticleIds.Contains(id));
+
+            if (!allExist)
+            {
+                throw new Exception("Some articles in the order do not exist in the database.");
+            }
+
+            //-------------------------------------------------
+            var order = new Order
+            {
+                OrderDate = DateTime.UtcNow, 
+                TotalPrice = orderRequestDto.TotalPrice,
+                UserId = user.UserId,  
+                User = user, 
+                OrderDetails = new List<OrderDetail>() 
+            };
+
+            await _orderRepository.AddOrderAsync(order);
+
+            //-------------------------------------------------
+
+            var orderDetailsList = new List<OrderDetail>();
+
+            foreach (var od in orderRequestDto.OrderDetails)
+            {
+                var article = await _context.Articles.FirstOrDefaultAsync(o => o.ArticleId == od.ArticleId);
+                if (article == null)
+                {
+                    throw new Exception($"Article with ID {od.ArticleId} does not exist.");
+                }
+
+                var orderDetail = new OrderDetail
+                {
+                    ArticleId = od.ArticleId,
+                    Article = article, 
+                    Quantity = od.Quantity,
+                    Price = od.Price,
+                    Order = order,     
+                    OrderId = order.OrderId  
+                };
+
+                await _orderRepository.AddOrderDetailAsync(orderDetail); 
+            }
+
+            //-------------------------------------------------
+
+            order.OrderDetails = orderDetailsList;
+
+            //-------------------------------------
+            var orderResponseDto = new OrderResponseDto
+            {
+                OrderId = order.OrderId,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                OrderDetails = new Collection<OrderDetailResponseDto>(
+                   order.OrderDetails.Select(od => new OrderDetailResponseDto
+                   {
+                       OrderDetailId = od.OrderDetailId,
+                       ArticleId = od.ArticleId,
+                       Quantity = od.Quantity,
+                       Price = od.Price,
+                       Article = new ArticleOrderDetailResponseDto
+                       {
+                           ArticleId = od.Article.ArticleId,
+                           Name = od.Article.Name,
+                           Price = od.Article.Price
+                       }
+                   }).ToList()
+               )
+            };
+
+            return Ok(orderResponseDto);
+
         }
 
-        // DELETE: api/Orders/5
+
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<IEnumerable<OrderResponseDto>>> GetAllOrdersByUserId(int userId)
+        {
+            // Fetch orders by user ID with their details and articles
+            var orders = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Article)
+                .Where(o => o.UserId == userId)
+                .ToListAsync();
+
+            if (orders == null || !orders.Any())
+            {
+                return NotFound($"No orders found for user with ID {userId}.");
+            }
+
+            // Map orders to OrderResponseDto
+            var orderResponseDtos = orders.Select(order => new OrderResponseDto
+            {
+                OrderId = order.OrderId,
+                UserId = order.UserId,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                OrderDetails = new Collection<OrderDetailResponseDto>(
+                    order.OrderDetails.Select(od => new OrderDetailResponseDto
+                    {
+                        OrderDetailId = od.OrderDetailId,
+                        ArticleId = od.ArticleId,
+                        Quantity = od.Quantity,
+                        Price = od.Price,
+                        Article = new ArticleOrderDetailResponseDto
+                        {
+                            ArticleId = od.Article.ArticleId,
+                            Name = od.Article.Name,
+                            Price = od.Article.Price
+                        }
+                    }).ToList()
+                )
+            }).ToList();
+
+            return Ok(orderResponseDtos);
+        }
+
+
+
+        /* // PUT: api/order/5
+         [HttpPut("{id}")]
+         public async Task<IActionResult> UpdateOrder(int id, OrderRequestDto OrderRequestDto)
+         {
+
+
+             var order = await _orderRepository.GetOrderByIdAsync(id);
+             if (order == null)
+             {
+                 return NotFound();  // Retourne 404 si la commande n'existe pas
+             }
+
+             // Met à jour la commande
+             await _orderRepository.UpdateOrderAsync(order);
+
+             var orderDetailsDto = new Collection<OrderDetailResponseDto>(
+                     order.OrderDetails.Select(od => new OrderDetailResponseDto
+                     {
+                         OrderDetailId = od.OrderDetailId,
+                         ArticleId = od.ArticleId,
+                         Quantity = od.Quantity,
+                         Price = od.Price,
+                     }).ToList() // Convert to List<OrderDetailResponseDto> before wrapping in Collection
+                 );
+
+             // Return the updated order response
+             return Ok(new OrderResponseDto
+             {
+                 OrderId = order.OrderId,
+                 OrderDate = order.OrderDate,
+                 TotalPrice = order.TotalPrice,
+                 OrderDetails = orderDetailsDto  // Return as Collection<OrderDetailResponseDto>
+             });
+         }*/
+
+        // DELETE: api/order/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _orderRepository.GetOrderByIdAsync(id);
             if (order == null)
             {
-                return NotFound();
+                return NotFound();  // Retourne 404 si la commande n'existe pas
             }
 
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
+            // Supprime la commande
+            await _orderRepository.DeleteOrderAsync(id);
 
-            return Ok(new { message = "order deleted successfully.", order });
-        }
-
-        private bool OrderExists(int id)
-        {
-            return _context.Orders.Any(e => e.OrderId == id);
+            return NoContent();  // Retourne 204 No Content après une suppression réussie
         }
     }
 }
